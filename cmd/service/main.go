@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql/resolver"
 	"log"
@@ -8,27 +9,45 @@ import (
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
 )
 
-const defaultPort = "8080"
+const (
+	RuntimeEnvVarName = "ENV"
+	productionRuntime = "Production"
+	portEnvVarName    = "PORT"
+	defaultPort       = "8080"
+)
 
 func main() {
-	port := os.Getenv("PORT")
+	graphqlHandler := newGraphqlHandler()
+	http.Handle("/query", graphqlHandler)
+
+	runtime := os.Getenv(RuntimeEnvVarName)
+	if runtime != productionRuntime {
+		playgroundHandler := playground.Handler("GraphQL playground", "/query")
+		http.Handle("/", playgroundHandler)
+	}
+
+	httpServerPort := getHttpServerPort()
+	log.Printf("The http server is running on port %s", httpServerPort)
+	log.Fatal(http.ListenAndServe(":"+httpServerPort, nil))
+}
+
+func newGraphqlHandler() http.Handler {
+	rootResolver := &resolver.Resolver{}
+	config := graphql.Config{
+		Resolvers: rootResolver,
+	}
+
+	executableSchema := graphql.NewExecutableSchema(config)
+	return handler.NewDefaultServer(executableSchema)
+}
+
+func getHttpServerPort() string {
+	port := os.Getenv(portEnvVarName)
 	if port == "" {
 		port = defaultPort
 	}
 
-	config := graphql.Config{
-		Resolvers: &resolver.Resolver{},
-	}
-
-	executableSchema := graphql.NewExecutableSchema(config)
-	graphqlServer := handler.NewDefaultServer(executableSchema)
-
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", graphqlServer)
-
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	return port
 }

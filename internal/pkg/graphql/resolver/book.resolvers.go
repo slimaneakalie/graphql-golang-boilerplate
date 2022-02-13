@@ -6,12 +6,29 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql/helper"
 
 	graphql1 "github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql"
 )
 
+const (
+	isbnArgumentName = "isbn"
+)
+
 func (r *bookInfoResolver) Metadata(ctx context.Context, obj *graphql1.BookInfo) (*graphql1.BookMetadata, error) {
-	panic(fmt.Errorf("not implemented"))
+	isbn := helper.GetStringRequiredArgumentFromContext(ctx, isbnArgumentName)
+	metadata, err := r.Services.Metadata.RetrieveBookMetadata(isbn)
+	if err != nil {
+		return nil, err
+	}
+
+	graphqlMetadata := &graphql1.BookMetadata{
+		Title:          metadata.Title,
+		PublishingDate: metadata.PublishingDate,
+		NumberOfPages:  metadata.NumberOfPages,
+	}
+
+	return graphqlMetadata, nil
 }
 
 func (r *bookInfoResolver) Reviews(ctx context.Context, obj *graphql1.BookInfo) (*graphql1.BookReviews, error) {
@@ -19,7 +36,7 @@ func (r *bookInfoResolver) Reviews(ctx context.Context, obj *graphql1.BookInfo) 
 }
 
 func (r *queryResolver) RetrieveBookInfo(ctx context.Context, isbn string) (*graphql1.BookInfo, error) {
-	panic(fmt.Errorf("not implemented"))
+	return &graphql1.BookInfo{}, nil
 }
 
 // BookInfo returns graphql1.BookInfoResolver implementation.
