@@ -33,14 +33,42 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	BookInfo() BookInfoResolver
+	Query() QueryResolver
 }
 
 type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Query struct {
+	BookInfo struct {
+		Metadata func(childComplexity int) int
+		Reviews  func(childComplexity int) int
 	}
+
+	BookMetadata struct {
+		NumberOfPages  func(childComplexity int) int
+		PublishingDate func(childComplexity int) int
+		Title          func(childComplexity int) int
+	}
+
+	BookReviews struct {
+		AverageRating   func(childComplexity int) int
+		NumberOfRatings func(childComplexity int) int
+		NumberOfReviews func(childComplexity int) int
+	}
+
+	Query struct {
+		RetrieveBookInfo func(childComplexity int, isbn string) int
+	}
+}
+
+type BookInfoResolver interface {
+	Metadata(ctx context.Context, obj *BookInfo) (*BookMetadata, error)
+	Reviews(ctx context.Context, obj *BookInfo) (*BookReviews, error)
+}
+type QueryResolver interface {
+	RetrieveBookInfo(ctx context.Context, isbn string) (*BookInfo, error)
 }
 
 type executableSchema struct {
@@ -57,6 +85,74 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "BookInfo.metadata":
+		if e.complexity.BookInfo.Metadata == nil {
+			break
+		}
+
+		return e.complexity.BookInfo.Metadata(childComplexity), true
+
+	case "BookInfo.reviews":
+		if e.complexity.BookInfo.Reviews == nil {
+			break
+		}
+
+		return e.complexity.BookInfo.Reviews(childComplexity), true
+
+	case "BookMetadata.numberOfPages":
+		if e.complexity.BookMetadata.NumberOfPages == nil {
+			break
+		}
+
+		return e.complexity.BookMetadata.NumberOfPages(childComplexity), true
+
+	case "BookMetadata.publishingDate":
+		if e.complexity.BookMetadata.PublishingDate == nil {
+			break
+		}
+
+		return e.complexity.BookMetadata.PublishingDate(childComplexity), true
+
+	case "BookMetadata.title":
+		if e.complexity.BookMetadata.Title == nil {
+			break
+		}
+
+		return e.complexity.BookMetadata.Title(childComplexity), true
+
+	case "BookReviews.AverageRating":
+		if e.complexity.BookReviews.AverageRating == nil {
+			break
+		}
+
+		return e.complexity.BookReviews.AverageRating(childComplexity), true
+
+	case "BookReviews.NumberOfRatings":
+		if e.complexity.BookReviews.NumberOfRatings == nil {
+			break
+		}
+
+		return e.complexity.BookReviews.NumberOfRatings(childComplexity), true
+
+	case "BookReviews.NumberOfReviews":
+		if e.complexity.BookReviews.NumberOfReviews == nil {
+			break
+		}
+
+		return e.complexity.BookReviews.NumberOfReviews(childComplexity), true
+
+	case "Query.RetrieveBookInfo":
+		if e.complexity.Query.RetrieveBookInfo == nil {
+			break
+		}
+
+		args, err := ec.field_Query_RetrieveBookInfo_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.RetrieveBookInfo(childComplexity, args["isbn"].(string)), true
 
 	}
 	return 0, false
@@ -107,12 +203,48 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(parsedSchema, parsedSchema.Types[name]), nil
 }
 
-var sources = []*ast.Source{}
+var sources = []*ast.Source{
+	{Name: "internal/pkg/graphql/schema/book.graphql", Input: `extend type Query {
+    RetrieveBookInfo(isbn: String!): BookInfo
+}
+
+type BookInfo {
+    metadata: BookMetadata
+    reviews: BookReviews
+}
+
+type BookMetadata {
+    title: String
+    publishingDate: String
+    numberOfPages: Int
+}
+
+type BookReviews {
+    NumberOfRatings: Int
+    NumberOfReviews: Int
+    AverageRating: Float
+}`, BuiltIn: false},
+}
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Query_RetrieveBookInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["isbn"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isbn"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["isbn"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -166,6 +298,301 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _BookInfo_metadata(ctx context.Context, field graphql.CollectedField, obj *BookInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BookInfo().Metadata(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*BookMetadata)
+	fc.Result = res
+	return ec.marshalOBookMetadata2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookMetadata(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookInfo_reviews(ctx context.Context, field graphql.CollectedField, obj *BookInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.BookInfo().Reviews(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*BookReviews)
+	fc.Result = res
+	return ec.marshalOBookReviews2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookReviews(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookMetadata_title(ctx context.Context, field graphql.CollectedField, obj *BookMetadata) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookMetadata",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookMetadata_publishingDate(ctx context.Context, field graphql.CollectedField, obj *BookMetadata) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookMetadata",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublishingDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookMetadata_numberOfPages(ctx context.Context, field graphql.CollectedField, obj *BookMetadata) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookMetadata",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumberOfPages, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookReviews_NumberOfRatings(ctx context.Context, field graphql.CollectedField, obj *BookReviews) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookReviews",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumberOfRatings, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookReviews_NumberOfReviews(ctx context.Context, field graphql.CollectedField, obj *BookReviews) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookReviews",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NumberOfReviews, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _BookReviews_AverageRating(ctx context.Context, field graphql.CollectedField, obj *BookReviews) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "BookReviews",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AverageRating, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*float64)
+	fc.Result = res
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_RetrieveBookInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_RetrieveBookInfo_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().RetrieveBookInfo(rctx, args["isbn"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*BookInfo)
+	fc.Result = res
+	return ec.marshalOBookInfo2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookInfo(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -1368,6 +1795,145 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var bookInfoImplementors = []string{"BookInfo"}
+
+func (ec *executionContext) _BookInfo(ctx context.Context, sel ast.SelectionSet, obj *BookInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bookInfoImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BookInfo")
+		case "metadata":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BookInfo_metadata(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "reviews":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BookInfo_reviews(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var bookMetadataImplementors = []string{"BookMetadata"}
+
+func (ec *executionContext) _BookMetadata(ctx context.Context, sel ast.SelectionSet, obj *BookMetadata) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bookMetadataImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BookMetadata")
+		case "title":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookMetadata_title(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "publishingDate":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookMetadata_publishingDate(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "numberOfPages":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookMetadata_numberOfPages(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var bookReviewsImplementors = []string{"BookReviews"}
+
+func (ec *executionContext) _BookReviews(ctx context.Context, sel ast.SelectionSet, obj *BookReviews) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bookReviewsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BookReviews")
+		case "NumberOfRatings":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookReviews_NumberOfRatings(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "NumberOfReviews":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookReviews_NumberOfReviews(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "AverageRating":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._BookReviews_AverageRating(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -1387,6 +1953,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "RetrieveBookInfo":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_RetrieveBookInfo(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -2104,6 +2690,27 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOBookInfo2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookInfo(ctx context.Context, sel ast.SelectionSet, v *BookInfo) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BookInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBookMetadata2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookMetadata(ctx context.Context, sel ast.SelectionSet, v *BookMetadata) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BookMetadata(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOBookReviews2ᚖgithubᚗcomᚋslimaneakalieᚋgraphqlᚑgolangᚑboilerplateᚋinternalᚋpkgᚋgraphqlᚐBookReviews(ctx context.Context, sel ast.SelectionSet, v *BookReviews) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._BookReviews(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2127,6 +2734,38 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

@@ -1,0 +1,20 @@
+extend type Query {
+    RetrieveBookInfo(isbn: String!): BookInfo
+}
+
+type BookInfo {
+    metadata: BookMetadata
+    reviews: BookReviews
+}
+
+type BookMetadata {
+    title: String
+    publishingDate: String
+    numberOfPages: Int
+}
+
+type BookReviews {
+    NumberOfRatings: Int
+    NumberOfReviews: Int
+    AverageRating: Float
+}

@@ -22,6 +22,7 @@ func main() {
 	config := graphql.Config{
 		Resolvers: &resolver.Resolver{},
 	}
+
 	executableSchema := graphql.NewExecutableSchema(config)
 	graphqlServer := handler.NewDefaultServer(executableSchema)
 
