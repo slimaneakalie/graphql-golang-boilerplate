@@ -4,6 +4,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql/resolver"
+	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/service/book/metadata"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ const (
 	productionRuntime = "Production"
 	portEnvVarName    = "PORT"
 	defaultPort       = "8080"
+	metadataApiURL    = "https://www.googleapis.com/books/v1/volumes"
 )
 
 func main() {
@@ -34,7 +36,13 @@ func main() {
 }
 
 func newGraphqlHandler() http.Handler {
-	rootResolver := &resolver.Resolver{}
+	resolverServices := &resolver.Services{
+		Metadata: metadata.NewService(metadataApiURL),
+	}
+
+	rootResolver := &resolver.Resolver{
+		Services: resolverServices,
+	}
 	config := graphql.Config{
 		Resolvers: rootResolver,
 	}
