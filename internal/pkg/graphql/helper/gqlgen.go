@@ -6,11 +6,11 @@ import (
 )
 
 func RetrieveStringRequiredArgumentFromContext(ctx context.Context, argumentName string) (arg string) {
-	argument, _ := getArgumentFromContext(ctx, argumentName)
+	argument, _ := retrieveArgumentFromContext(ctx, argumentName)
 	return argument.(string)
 }
 
-func getArgumentFromContext(ctx context.Context, argumentName string) (arg interface{}, exists bool) {
+func retrieveArgumentFromContext(ctx context.Context, argumentName string) (arg interface{}, exists bool) {
 	parentContext := graphql.GetFieldContext(ctx)
 	exists = false
 
