@@ -5,6 +5,7 @@ import (
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql/resolver"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/service/book/metadata"
+	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/service/book/reviews"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ const (
 	portEnvVarName    = "PORT"
 	defaultPort       = "8080"
 	metadataApiURL    = "https://www.googleapis.com/books/v1/volumes"
+	reviewsApiURL     = "https://www.goodreads.com/book/review_counts.json"
 )
 
 func main() {
@@ -38,6 +40,7 @@ func main() {
 func newGraphqlHandler() http.Handler {
 	resolverServices := &resolver.Services{
 		Metadata: metadata.NewService(metadataApiURL),
+		Reviews:  reviews.NewService(reviewsApiURL),
 	}
 
 	rootResolver := &resolver.Resolver{

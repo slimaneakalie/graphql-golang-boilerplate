@@ -10,11 +10,11 @@ type BookMetadata struct {
 	NumberOfPages  *int
 }
 
-type APIResponse struct {
-	Items []*APIResponseItem `json:"items,omitempty"`
+type apiResponse struct {
+	Items []*apiResponseItem `json:"items,omitempty"`
 }
 
-type APIResponseItem struct {
+type apiResponseItem struct {
 	VolumeInfo struct {
 		Title         *string `json:"title,omitempty"`
 		PublishedDate *string `json:"publishedDate,omitempty"`

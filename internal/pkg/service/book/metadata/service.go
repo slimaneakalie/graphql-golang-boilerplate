@@ -18,38 +18,38 @@ func NewService(metadataApiURL string) Service {
 }
 
 func (service *defaultService) RetrieveBookMetadata(isbn string) (*BookMetadata, error) {
-	apiResponse, err := service.fetchBookMetadataFromExternalAPI(isbn)
+	response, err := service.retrieveBookMetadataFromExternalAPI(isbn)
 	if err != nil {
 		return nil, err
 	}
 
-	return mapAPIResponseToBookMetadata(apiResponse), nil
+	return mapAPIResponseToBookMetadata(response), nil
 }
 
-func (service *defaultService) fetchBookMetadataFromExternalAPI(isbn string) (*APIResponse, error) {
+func (service *defaultService) retrieveBookMetadataFromExternalAPI(isbn string) (*apiResponse, error) {
 	isbnQueryParamValue := isbnQueryParamValuePrefix + isbn
-	var apiResponse APIResponse
+	var response apiResponse
 
 	err := requests.
 		URL(service.metadataApiURL).
 		Method(http.MethodGet).
 		Param(isbnQueryParamKey, isbnQueryParamValue).
-		ToJSON(&apiResponse).
+		ToJSON(&response).
 		Fetch(context.Background())
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &apiResponse, nil
+	return &response, nil
 }
 
-func mapAPIResponseToBookMetadata(apiResponse *APIResponse) *BookMetadata {
-	if len(apiResponse.Items) == 0 {
+func mapAPIResponseToBookMetadata(response *apiResponse) *BookMetadata {
+	if len(response.Items) == 0 {
 		return &BookMetadata{}
 	}
 
-	volumeInfo := apiResponse.Items[0].VolumeInfo
+	volumeInfo := response.Items[0].VolumeInfo
 	return &BookMetadata{
 		Title:          volumeInfo.Title,
 		PublishingDate: volumeInfo.PublishedDate,

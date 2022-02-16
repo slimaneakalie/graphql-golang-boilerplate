@@ -5,7 +5,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
-func GetStringRequiredArgumentFromContext(ctx context.Context, argumentName string) (arg string) {
+func RetrieveStringRequiredArgumentFromContext(ctx context.Context, argumentName string) (arg string) {
 	argument, _ := getArgumentFromContext(ctx, argumentName)
 	return argument.(string)
 }

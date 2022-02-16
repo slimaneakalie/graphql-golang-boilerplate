@@ -5,7 +5,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 	"github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql/helper"
 
 	graphql1 "github.com/slimaneakalie/graphql-golang-boilerplate/internal/pkg/graphql"
@@ -16,7 +15,7 @@ const (
 )
 
 func (r *bookInfoResolver) Metadata(ctx context.Context, obj *graphql1.BookInfo) (*graphql1.BookMetadata, error) {
-	isbn := helper.GetStringRequiredArgumentFromContext(ctx, isbnArgumentName)
+	isbn := helper.RetrieveStringRequiredArgumentFromContext(ctx, isbnArgumentName)
 	metadata, err := r.Services.Metadata.RetrieveBookMetadata(isbn)
 	if err != nil {
 		return nil, err
@@ -32,7 +31,19 @@ func (r *bookInfoResolver) Metadata(ctx context.Context, obj *graphql1.BookInfo)
 }
 
 func (r *bookInfoResolver) Reviews(ctx context.Context, obj *graphql1.BookInfo) (*graphql1.BookReviews, error) {
-	panic(fmt.Errorf("not implemented"))
+	isbn := helper.RetrieveStringRequiredArgumentFromContext(ctx, isbnArgumentName)
+	reviews, err := r.Services.Reviews.RetrieveBookReviews(isbn)
+	if err != nil {
+		return nil, err
+	}
+
+	graphqlReviews := &graphql1.BookReviews{
+		NumberOfRatings: reviews.NumberOfRatings,
+		NumberOfReviews: reviews.NumberOfReviews,
+		AverageRating:   reviews.AverageRating,
+	}
+
+	return graphqlReviews, nil
 }
 
 func (r *queryResolver) RetrieveBookInfo(ctx context.Context, isbn string) (*graphql1.BookInfo, error) {
